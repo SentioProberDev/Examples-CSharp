@@ -141,7 +141,7 @@ namespace SentioSteppingTcpIp
                 CheckSentioResp(err, msg);
 
                 // Step until last die state is signalled
-                while (stat != RemoteCommandStatus.LastDie)
+                while (!stat.HasFlag(RemoteCommandStatus.LastDie))
                 {
                     Send("map:step_next_die", out err, out stat, out cmdId, out msg);
                     CheckSentioResp(err, msg);
