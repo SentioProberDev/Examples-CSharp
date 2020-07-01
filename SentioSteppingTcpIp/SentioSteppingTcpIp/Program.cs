@@ -1,17 +1,25 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using System.Net.Sockets;
+using System.Text;
+
 // ReSharper disable IdentifierTypo
 
 namespace SentioSteppingTcpIp
 {
     class Program
     {
+        private static TcpClient _tcpClient = new TcpClient();
+
+        private static StreamReader _reader;
+
         public static void Connect(string host, int port)
         {
-            Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
             Console.WriteLine("Establishing Connection to {0}", host);
-            s.Connect(host, port);
+            _tcpClient.Connect(host, port);
+            _reader = new StreamReader(_tcpClient.GetStream(), Encoding.UTF8);
+
             Console.WriteLine("Connection established");
         }
 
@@ -21,7 +29,41 @@ namespace SentioSteppingTcpIp
         /// </summary>
         /// <param name="cmd"></param>
         public static void Send(string cmd)
-        { }
+        {
+            if (_tcpClient == null || !_tcpClient.Connected)
+            {
+                throw new InvalidOperationException("Tcp client not connected!");
+            }
+
+            Console.WriteLine($"Sending remote command: {cmd}");
+
+            // Make sure the command is terminated properly
+            if (!cmd.EndsWith('\n'))
+                cmd = cmd + '\n';
+
+            var tcpStream = _tcpClient.GetStream();
+            byte[] bytesToSend = Encoding.ASCII.GetBytes(cmd);
+
+            tcpStream.Write(bytesToSend, 0, bytesToSend.Length);
+        }
+
+        public static string Readline()
+        {
+            if (_tcpClient == null || !_tcpClient.Connected)
+                throw new InvalidOperationException("Tcp client not connected!");
+
+            var resp = _reader.ReadLine();
+            if (string.IsNullOrEmpty(resp))
+                throw new InvalidOperationException("Invalid Response!");
+
+            return resp;
+        }
+
+        public static void Send(string cmd, out string msg)
+        {
+            Send(cmd);
+            msg = Readline();
+        }
 
         /// <summary>
         /// Send a command to SENTIO, collect the response.
@@ -32,16 +74,35 @@ namespace SentioSteppingTcpIp
         /// <param name="stat">A status code (i.e. last die, last sub site)</param>
         /// <param name="cmdId">Command ID. Only used by asynchronous remote commands</param>
         /// <param name="msg">remote command return string</param>
-        public static void Send(string cmd, out int errc, out int stat, out int cmdId, out string msg)
+        public static void Send(string cmd, out RemoteCommandResult errc, out RemoteCommandStatus stat, out int cmdId, out string msg)
         {
-            errc = -1;
-            stat = -1;
+            errc = RemoteCommandResult.NoError;
+            stat = RemoteCommandStatus.None;
             cmdId = -1;
             msg = "";
 
-            Console.WriteLine($"Sending remote command: {cmd}");
+            Send(cmd);
+            var resp = Readline();
+            var tok = resp.Split(",");
+            if (tok.Length < 3)
+                throw new InvalidOperationException("Invalid Response Format!");
 
-            Console.WriteLine($"Remote command Response: {errc}, {stat}, {cmdId}: {msg}");
+            // SENTIO's error code consists of an error code and a status code!
+            var errcOrig = uint.Parse(tok[0]);
+            errc = (RemoteCommandResult)(errcOrig & 0b1111111111);  // the lowermost 10 bits cvontain the error code
+            stat = (RemoteCommandStatus)(errcOrig >> 10);           // the uppermost bits contain status codes
+            cmdId = int.Parse(tok[1]);
+
+            // Collect the remaining arguments and join them back together
+            msg = string.Join(",", tok.Skip(2).ToArray());
+
+            Console.WriteLine($"Remote command Response: errc={errc},stat={stat},cmdId={cmdId}: resp=\"{msg}\"");
+        }
+
+        static void CheckSentioResp(RemoteCommandResult errc, string msg)
+        {
+            if (errc != RemoteCommandResult.NoError)
+                throw new Exception($"Remote command error {errc}: {msg}");
         }
 
         static void Main(string[] args)
@@ -52,17 +113,42 @@ namespace SentioSteppingTcpIp
                 // is set up to listen at port 35555 (default port)
                 Connect("127.0.0.1", 35555);
 
-                int errc, stat, cmdId;
+
+                RemoteCommandStatus stat;
+                RemoteCommandResult err;
+                int cmdId;
                 string msg;
 
                 // Ask SENTIO for self identification.
                 // errc, stat and cmdID will only be set when sending native SENTIO remote commands!
                 // "*IDN?" is not a SENTIO remote command but a low level command.
-                Send("*IDN?", out errc, out stat, out cmdId, out msg);
+                Send("*IDN?", out msg);
+                Console.WriteLine($"Remote command Response: {msg}");
+
+                // Switch remote command set to SENTIO's native command set
+                Send("*RCS 1"); // this command does not have a response!
+
+                // select the wafermap module
+                Send("select_module wafermap", out err, out stat, out cmdId, out msg);
+                CheckSentioResp(err, msg);
+
+                Send("map:set_grid_params 40000, 40000, 0, 0, 4000", out err, out stat, out cmdId, out msg);
+                CheckSentioResp(err, msg);
+
+                Send("map:step_first_die", out err, out stat, out cmdId, out msg);
+                CheckSentioResp(err, msg);
+
+                while (stat != RemoteCommandStatus.LastDie)
+                {
+                    Send("map:step_next_die", out err, out stat, out cmdId, out msg);
+                    CheckSentioResp(err, msg);
+                }
+
+                Console.WriteLine("Script finished!");
             }
             catch (Exception exc)
             {
-                Console.WriteLine("Error:");
+                Console.WriteLine("\nError:");
                 Console.WriteLine("------");
                 Console.WriteLine(exc.Message);
             }
