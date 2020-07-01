@@ -4,13 +4,16 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 
+// ReSharper disable InconsistentNaming
+// ReSharper disable NotAccessedVariable
+// ReSharper disable UnusedParameter.Local
 // ReSharper disable IdentifierTypo
 
 namespace SentioSteppingTcpIp
 {
     class Program
     {
-        private static TcpClient _tcpClient = new TcpClient();
+        private static readonly TcpClient _tcpClient = new TcpClient();
 
         private static StreamReader _reader;
 
@@ -19,7 +22,6 @@ namespace SentioSteppingTcpIp
             Console.WriteLine("Establishing Connection to {0}", host);
             _tcpClient.Connect(host, port);
             _reader = new StreamReader(_tcpClient.GetStream(), Encoding.UTF8);
-
             Console.WriteLine("Connection established");
         }
 
@@ -95,7 +97,6 @@ namespace SentioSteppingTcpIp
 
             // Collect the remaining arguments and join them back together
             msg = string.Join(",", tok.Skip(2).ToArray());
-
             Console.WriteLine($"Remote command Response: errc={errc},stat={stat},cmdId={cmdId}: resp=\"{msg}\"");
         }
 
@@ -113,23 +114,17 @@ namespace SentioSteppingTcpIp
                 // is set up to listen at port 35555 (default port)
                 Connect("127.0.0.1", 35555);
 
-
-                RemoteCommandStatus stat;
-                RemoteCommandResult err;
-                int cmdId;
-                string msg;
-
                 // Ask SENTIO for self identification.
-                // errc, stat and cmdID will only be set when sending native SENTIO remote commands!
+                // err, stat and cmdID will only be set when sending native SENTIO remote commands!
                 // "*IDN?" is not a SENTIO remote command but a low level command.
-                Send("*IDN?", out msg);
+                Send("*IDN?", out var msg);
                 Console.WriteLine($"Remote command Response: {msg}");
 
                 // Switch remote command set to SENTIO's native command set
                 Send("*RCS 1"); // this command does not have a response!
 
                 // select the wafermap module
-                Send("select_module wafermap", out err, out stat, out cmdId, out msg);
+                Send("select_module wafermap", out var err, out var stat, out var cmdId, out msg);
                 CheckSentioResp(err, msg);
 
                 // Set grid parameters
