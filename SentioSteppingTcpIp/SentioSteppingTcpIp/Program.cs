@@ -132,12 +132,15 @@ namespace SentioSteppingTcpIp
                 Send("select_module wafermap", out err, out stat, out cmdId, out msg);
                 CheckSentioResp(err, msg);
 
+                // Set grid parameters
                 Send("map:set_grid_params 40000, 40000, 0, 0, 4000", out err, out stat, out cmdId, out msg);
                 CheckSentioResp(err, msg);
 
+                // Step to first die
                 Send("map:step_first_die", out err, out stat, out cmdId, out msg);
                 CheckSentioResp(err, msg);
 
+                // Step until last die state is signalled
                 while (stat != RemoteCommandStatus.LastDie)
                 {
                     Send("map:step_next_die", out err, out stat, out cmdId, out msg);
