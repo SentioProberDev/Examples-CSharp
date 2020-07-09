@@ -1,5 +1,6 @@
 # Examples for controlling MPI SENTIO with C#
-Examples for remotely controlling Sentio with the C# programming language
+A basic example for demonstrating how to remotely control SENTIO with TCP/Ip
+
 ```
 static void Main(string[] args)
 {
