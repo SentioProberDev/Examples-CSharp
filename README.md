@@ -1,7 +1,7 @@
 # Examples for controlling MPI SENTIO with C#
 A basic example for demonstrating how to remotely control SENTIO with TCP/Ip
 
-```
+```csharp
 static void Main(string[] args)
 {
     try
