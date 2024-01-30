@@ -1,0 +1,12 @@
+﻿<Application x:Class="Sentio.Rpc.Client.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Sentio.Rpc.Client"
+             xmlns:viewModels="clr-namespace:Sentio.Rpc.Client.ViewModels"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <viewModels:MainViewModel x:Key="MainViewModel"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

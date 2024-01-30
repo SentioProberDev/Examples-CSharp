@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1169
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SentioSteppingTcpIp", "SentioSteppingTcpIp\SentioSteppingTcpIp.csproj", "{6487B81D-C7D3-45D7-8646-57975F5D7619}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SentioSteppingTcpIp", "Sentio.BasicTcp\SentioSteppingTcpIp.csproj", "{6487B81D-C7D3-45D7-8646-57975F5D7619}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sentio.Rpc.Client", "Sentio.Rpc.Client\Sentio.Rpc.Client.csproj", "{987AD020-69B5-4D9B-B8E0-CE9CFACDDDD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{6487B81D-C7D3-45D7-8646-57975F5D7619}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6487B81D-C7D3-45D7-8646-57975F5D7619}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6487B81D-C7D3-45D7-8646-57975F5D7619}.Release|Any CPU.Build.0 = Release|Any CPU
+		{987AD020-69B5-4D9B-B8E0-CE9CFACDDDD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{987AD020-69B5-4D9B-B8E0-CE9CFACDDDD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{987AD020-69B5-4D9B-B8E0-CE9CFACDDDD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{987AD020-69B5-4D9B-B8E0-CE9CFACDDDD0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
