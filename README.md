@@ -1,5 +1,10 @@
 # Examples for controlling MPI SENTIO with C#
-A basic example for demonstrating how to remotely control SENTIO with TCP/Ip
+
+This archive contains two samples for demonstrating how to remotely control SENTIO from C#.
+
+## Sentio.BasicTcpIp: Direct TCP/Ip communication with SENTIO remote commands
+
+This example demonstrates the use of SENTIO's remote command API via basic TCP/Ip communication over a socket.
 
 ```csharp
 static void Main(string[] args)
@@ -48,3 +53,8 @@ static void Main(string[] args)
     }
 }
  ```
+
+## Sentio.Rpc.Client: Using SENTIO's JsonRpc based remote API
+
+This example demonstrates the use of the "Sentio.Rpc.Packed.dll" for a more direct control of SENTIO.
+
