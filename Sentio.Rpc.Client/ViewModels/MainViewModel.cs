@@ -148,10 +148,11 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
 
         var resp = new RemoteCommandResponse
         {
-            ErrorCode = 4, // 4 - Invalid Command
-            Message = "Command not implemented",
+            ErrorCode = 0, // 4 - Invalid Command
+            Message = $"Client command received: {cmd} {param}",
             StatusCode = 0
         };
+
         return resp;
     }
 
@@ -234,9 +235,20 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
     {
         try
         {
+            // Create a new SentioProxyForClients instance
             Sentio = new SentioProxyForClients(this);
 
-            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Sentio_23_2, ct);
+            // Connect to the SENTIO Server. Submit client name, remote prefix and the
+            // compatibility level.
+            //
+            // The remote prefix is used to identify remote commands aimed at this client. In this examples
+            // all remote commands are prefixed with "rpc". Therefore a command like "rpc:do_something"
+            // will be forwarded to this client by SENTIO.
+            //
+            // The compatibility level will control the level of notifications sent by SENTIO.
+            // Newer versions of SENTIO will send more notifications such as for project
+            // loading and saving. 
+            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Sentio_24_0, ct);
 
             // Query the compatibility level supported by the SENTIO Server.
             var compatLevel = Sentio.CompatLevel;
@@ -575,7 +587,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
 
     private Camera _activeCamera = Camera.Scope;
     private Stage _activeStage = Stage.Unknown;
-    private string _serverName = "192.168.0.52";
+    private string _serverName = "127.0.0.1";
 
     public Camera ActiveCamera
     {
