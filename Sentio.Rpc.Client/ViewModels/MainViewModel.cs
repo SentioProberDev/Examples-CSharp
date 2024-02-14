@@ -248,7 +248,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
             // The compatibility level will control the level of notifications sent by SENTIO.
             // Newer versions of SENTIO will send more notifications such as for project
             // loading and saving. 
-            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Sentio_24_0, ct);
+            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Sentio_23_2, ct);
 
             // Query the compatibility level supported by the SENTIO Server.
             var compatLevel = Sentio.CompatLevel;
