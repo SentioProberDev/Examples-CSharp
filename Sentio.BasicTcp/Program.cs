@@ -132,6 +132,7 @@ namespace SentioSteppingTcpIp
                 CheckSentioResp(err, msg);
 
                 // Step to first die
+                // Note: This will only work if you have set a contact height and home position on the prober.
                 Send("map:step_first_die", out err, out stat, out cmdId, out msg);
                 CheckSentioResp(err, msg);
 
@@ -141,6 +142,14 @@ namespace SentioSteppingTcpIp
                     Send("map:step_next_die", out err, out stat, out cmdId, out msg);
                     CheckSentioResp(err, msg);
                 }
+
+                // Download image from the active camera (requires Sentio 23.0.6 or above)
+                Send("vis:snap_image **download**, 0", out err, out stat, out cmdId, out msg);
+                CheckSentioResp(err, msg);
+
+                // decode jpeg data from base 64 string
+                byte[] jpegData = Convert.FromBase64String(msg);
+                File.WriteAllBytes("./image.jpg", jpegData);
 
                 Console.WriteLine("Script finished!");
             }
