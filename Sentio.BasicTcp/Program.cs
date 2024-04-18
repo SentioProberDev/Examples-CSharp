@@ -146,10 +146,7 @@ namespace SentioSteppingTcpIp
                 // Download image from the active camera (requires Sentio 23.0.6 or above)
                 Send("vis:snap_image **download**, 0", out err, out stat, out cmdId, out msg);
                 CheckSentioResp(err, msg);
-
-                // decode jpeg data from base 64 string
-                byte[] jpegData = Convert.FromBase64String(msg);
-                File.WriteAllBytes("./image.jpg", jpegData);
+                File.WriteAllBytes("./image.jpg", Convert.FromBase64String(msg));
 
                 Console.WriteLine("Script finished!");
             }
