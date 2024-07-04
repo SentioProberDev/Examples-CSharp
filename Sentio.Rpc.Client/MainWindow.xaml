@@ -29,7 +29,7 @@
                         <Button Content="Vision" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.Vision}" Margin="5"/>
                         <Button Content="Wafermap" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.Wafermap}" Margin="5"/>
                         <Button Content="AuxSites" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.AuxSites}" Margin="5"/>
-                        <Button Content="Qalibria" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.Qalibria}" Margin="5"/>
+                        <Button Content="Qalibria" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.QAlibria}" Margin="5"/>
                         <Button Content="Setup" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.Setup}" Margin="5"/>
                         <Button Content="Service" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.Service}" Margin="5"/>
                         <Button Content="Dashboard" Width="100" Height="50" Command="{Binding CmdSelectModule}" CommandParameter="{x:Static enumerations1:SentioModules.Dashboard}" Margin="5"/>
