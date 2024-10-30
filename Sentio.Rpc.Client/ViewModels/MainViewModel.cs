@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,8 +31,6 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
     private string _hint = "Hello World";
 
     private ImageSource? _imageSource;
-
-    private bool _isConnected;
 
     private bool _isInRemoteMode;
 
@@ -91,11 +90,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         set => SetProperty(ref _imageSource, value);
     }
 
-    public bool IsConnected
-    {
-        get => _isConnected;
-        set => SetProperty(ref _isConnected, value);
-    }
+    public bool IsConnected => Sentio is { IsConnected: true };
 
     public bool IsInRemoteMode
     {
@@ -191,7 +186,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         if (_clientUi is { Count: > 0 })
         {
             var tb = _clientUi.Find(i => i.Id.Equals(tbId)) as ClientTextBox;
-            if (tb!=null)
+            if (tb != null)
                 await tb.OnTextChanged(text);
         }
     }
@@ -242,13 +237,13 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
             // compatibility level.
             //
             // The remote prefix is used to identify remote commands aimed at this client. In this examples
-            // all remote commands are prefixed with "rpc". Therefore a command like "rpc:do_something"
+            // all remote commands are prefixed with "rpc". Therefor a command like "rpc:do_something"
             // will be forwarded to this client by SENTIO.
             //
             // The compatibility level will control the level of notifications sent by SENTIO.
             // Newer versions of SENTIO will send more notifications such as for project
             // loading and saving. 
-            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Sentio_23_2, ct);
+            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Sentio_24_4, ct);
 
             // Query the compatibility level supported by the SENTIO Server.
             var compatLevel = Sentio.CompatLevel;
@@ -284,11 +279,14 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
             await Sentio.SetupClientPanelAsync(_clientUi);
             Sentio.ShowClientPanel = true;
 
-            IsConnected = true;
+
+            
         }
         catch (Exception exc)
         {
-            IsConnected = false;
+            if (Sentio is { IsConnected: true })
+                Sentio?.Disconnect();
+
             Sentio = null;
             Output($"Error while connecting with SENTIO: {exc.Message}");
         }
@@ -311,6 +309,8 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         try
         {
             Sentio.Disconnect();
+            OnPropertyChanged(nameof(IsConnected));
+
             ClearOutput();
             Output("Disconnected from SENTIO!");
         }
@@ -320,7 +320,6 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         }
         finally
         {
-            IsConnected = false;
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -341,6 +340,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         try
         {
             await ConnectAsync(ServerName, "rpc", CancellationToken.None);
+            OnPropertyChanged(nameof(IsConnected));
         }
         catch (Exception exc)
         {
@@ -368,9 +368,11 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         try
         {
             Output($"Requesting {ActiveCamera} Camera image");
-            
+            var sw = new Stopwatch();
+            sw.Start();
+
             var imageData = await Sentio.GrabCameraImageAsync(ActiveCamera, ImageFormat.Jpeg, DownSample.Original);
-            if (imageData == null) 
+            if (imageData == null)
                 return;
 
             Output("Camera image transferred");
@@ -381,7 +383,8 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
             bmp.StreamSource = memoryStream;
             bmp.EndInit();
 
-            Output("Image encoded");
+            Output($"Image encoded ({sw.ElapsedMilliseconds} ms)");
+
             // Assign the Source property of your image
             ImageSource = bmp;
         }

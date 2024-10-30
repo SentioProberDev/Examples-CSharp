@@ -10,3 +10,4 @@ Sentio.Rpc/obj/x64/Debug/netstandard2.0/Sentio.Rpc.dll
 Sentio.BasicTcp/bin/*
 Sentio.BasicTcp/.vs/*
 Sentio.BasicTcp/obj/*
+Sentio.Rpc.Client/Sentio.Rpc.Packed.pdb
