@@ -402,32 +402,36 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         {
             LogLines.Clear();
 
-            var visionProp = new Dictionary<string, string>
+            var visionProp = new Dictionary<string, Tuple<string, string>>
             {
                 // Jpeg Quality in percent when saving images
-                { "jpeg_quality", "" },
+                { "jpeg_quality", new Tuple<string, string>("", "") },
 
                 // Camera Parameters, The parameter refers to the camera.
                 // available cameras are: scope, offaxis, chuck, vce01, scope2
-                { "image_size", "scope" },
-                { "light", "scope" },
-                { "gain", "scope" },
-                { "gain_min", "scope" },
-                { "gain_max", "scope" },
-                { "exposure", "scope" },
-                { "exposure_min", "scope" },
-                { "exposure_max", "scope" },
-                { "calib", "scope" },
+                { "image_size", new Tuple<string, string>("scope", "") },
+                { "light", new Tuple<string, string>("scope", "coaxial") },
+                { "gain", new Tuple<string, string>("scope", "")},
+                { "gain_min", new Tuple<string, string>("scope", "") },
+                { "gain_max", new Tuple<string, string>("scope", "") },
+                { "exposure", new Tuple<string, string>("scope", "") },
+                { "exposure_min",new Tuple<string, string>("scope", "") },
+                { "exposure_max", new Tuple<string, string>("scope", "") },
+                { "calib", new Tuple<string, string>("scope", "")},
 
                 // size of the camera's region of interest in µm
-                { "roi_size", "scope" }
+                { "roi_size",new Tuple<string, string>("scope", "") }
             };
 
             foreach (var it in visionProp)
                 try
                 {
                     var propName = it.Key;
-                    var propArg = new SentioVariantData(it.Value);
+                    var args = it.Value;
+                    SentioVariantData[] propArg = {
+                            new (args.Item1),  
+                            new (args.Item2)
+                    };
 
                     var prop = Sentio.GetModuleProperty(SentioModules.Vision, propName, propArg);
                     LogLines.Add($"{it.Key} - {prop} ({prop.Type})");
