@@ -21,10 +21,12 @@ using Sentio.Rpc.Enumerations;
 
 namespace Sentio.Rpc.Client.ViewModels;
 
-
 public class MainViewModel : ObservableObject, ISentioRpcClient
 {
+    private Camera _activeCamera = Camera.Scope;
     private SentioModules _activeModule;
+    private Stage _activeStage = Stage.Unknown;
+    private int _activeStageIdx;
 
     private List<ClientControl>? _clientUi;
 
@@ -35,6 +37,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
     private bool _isInRemoteMode;
 
     private string _sentioVersion = "";
+    private string _serverName = "127.0.0.1";
 
     private SentioSessionInfo _session;
 
@@ -50,6 +53,8 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         CmdShowHint = new AsyncRelayCommand(CmdShowHintImplAsync);
         CmdSetLight = new AsyncRelayCommand(SetModulePropertiesAsync);
         CmdListModuleProperties = new RelayCommand(ListModuleProperties);
+
+        LogLines.Add($"This client supports Sentio compatibility level {SentioCompatibilityLevel.Latest}.");
     }
 
     public SentioModules ActiveModule
@@ -124,17 +129,52 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
     {
         get
         {
-            if (Sentio == null) return false;
+            if (Sentio == null)
+                return false;
 
             return Sentio.ShowClientPanel;
         }
 
         set
         {
-            if (Sentio != null) Sentio.ShowClientPanel = value;
+            if (Sentio != null)
+                Sentio.ShowClientPanel = value;
 
             OnPropertyChanged();
         }
+    }
+
+    /// <summary>
+    ///     Returns the active stage.
+    ///     Starting with 25.2 the stage enum can represent a group of stages such as top probes or bottom probes.
+    ///     In that case you also need the ActiveStageIdx to determine which stage is actually active.
+    /// </summary>
+    public Stage ActiveStage
+    {
+        get => _activeStage;
+        set => SetProperty(ref _activeStage, value);
+    }
+
+    /// <summary>
+    ///     Index of the active stage.
+    ///     Only relevant if the active stage is a group of stages such as top probes or bottom probes.
+    /// </summary>
+    public int ActiveStageIdx
+    {
+        get => _activeStageIdx;
+        set => SetProperty(ref _activeStageIdx, value);
+    }
+
+    public string ServerName
+    {
+        get => _serverName;
+        set => SetProperty(ref _serverName, value);
+    }
+
+    public Camera ActiveCamera
+    {
+        get => _activeCamera;
+        set => SetProperty(ref _activeCamera, value);
     }
 
     public RemoteCommandResponse ExecuteExternalRemoteCommand(string cmd, string param)
@@ -156,10 +196,11 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         ActiveModule = module;
     }
 
-    public void NotifyActiveStageChanged(Stage stage)
+    public void NotifyActiveStageChanged(Stage stage, int idx)
     {
         ActiveStage = stage;
-        Output($"NotifyActiveStageChanged({stage})");
+        ActiveStageIdx = idx;
+        Output($"NotifyActiveStageChanged({stage}, {idx})");
     }
 
     public async void NotifyButtonPressed(string btnId)
@@ -208,7 +249,20 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
 
     public void NotifySentioShutdown()
     {
-        Output("NotifySentioShutdown()");
+        try
+        {
+            Sentio?.Disconnect();
+            ClearOutput();
+            Output("NotifySentioShutdown()");
+        }
+        catch (Exception exc)
+        {
+            Output($"Error while disconnecting with SENTIO: {exc.Message}");
+        }
+        finally
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 
     public void NotifySessionChanged(SentioSessionInfo session)
@@ -243,11 +297,15 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
             // The compatibility level will control the level of notifications sent by SENTIO.
             // Newer versions of SENTIO will send more notifications such as for project
             // loading and saving. 
-            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Sentio_24_4, ct);
+            await Sentio.ConnectAsync(serverName, "Json-RPC Demo Client", "rpc", SentioCompatibilityLevel.Latest, ct);
 
             // Query the compatibility level supported by the SENTIO Server.
             var compatLevel = Sentio.CompatLevel;
-            LogLines.Add($"Sentio Server is reporting compatibility level {compatLevel}");
+            if (!Enum.IsDefined(compatLevel))
+                LogLines.Add(
+                    $"Sentio Server is reporting compatibility level {compatLevel}. This level is higher than the one supported by the RPC version of this client!");
+            else
+                LogLines.Add($"Sentio Server is reporting compatibility level {compatLevel}");
 
             SentioVersion = Sentio.Version;
             LogLines.Add($"Sentio Server is reporting SENTIO version {SentioVersion}");
@@ -278,9 +336,6 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
             };
             await Sentio.SetupClientPanelAsync(_clientUi);
             Sentio.ShowClientPanel = true;
-
-
-            
         }
         catch (Exception exc)
         {
@@ -294,12 +349,6 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
         {
             this.DispatchToUiAsync(CommandManager.InvalidateRequerySuggested);
         }
-    }
-
-    public Stage ActiveStage
-    {
-        get => _activeStage;
-        set => SetProperty(ref _activeStage, value);
     }
 
     public void DisconnectClient()
@@ -327,12 +376,6 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
     private void ClearOutput()
     {
         this.DispatchToUiAsync(LogLines.Clear);
-    }
-
-    public string ServerName
-    {
-        get => _serverName;
-        set => SetProperty(ref _serverName, value);
     }
 
     private async Task CmdConnectImplAsync()
@@ -371,7 +414,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
             var sw = new Stopwatch();
             sw.Start();
 
-            var imageData = await Sentio.GrabCameraImageAsync(ActiveCamera, ImageFormat.Jpeg, DownSample.Original);
+            var imageData = await Sentio.GrabCameraImageAsync(ActiveCamera, ImageFormat.Jpeg);
             if (imageData == null)
                 return;
 
@@ -411,16 +454,16 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
                 // available cameras are: scope, offaxis, chuck, vce01, scope2
                 { "image_size", new Tuple<string, string>("scope", "") },
                 { "light", new Tuple<string, string>("scope", "coaxial") },
-                { "gain", new Tuple<string, string>("scope", "")},
+                { "gain", new Tuple<string, string>("scope", "") },
                 { "gain_min", new Tuple<string, string>("scope", "") },
                 { "gain_max", new Tuple<string, string>("scope", "") },
                 { "exposure", new Tuple<string, string>("scope", "") },
-                { "exposure_min",new Tuple<string, string>("scope", "") },
+                { "exposure_min", new Tuple<string, string>("scope", "") },
                 { "exposure_max", new Tuple<string, string>("scope", "") },
-                { "calib", new Tuple<string, string>("scope", "")},
+                { "calib", new Tuple<string, string>("scope", "") },
 
                 // size of the camera's region of interest in µm
-                { "roi_size",new Tuple<string, string>("scope", "") }
+                { "roi_size", new Tuple<string, string>("scope", "") }
             };
 
             foreach (var it in visionProp)
@@ -428,9 +471,10 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
                 {
                     var propName = it.Key;
                     var args = it.Value;
-                    SentioVariantData[] propArg = {
-                            new (args.Item1),  
-                            new (args.Item2)
+                    SentioVariantData[] propArg =
+                    {
+                        new(args.Item1),
+                        new(args.Item2)
                     };
 
                     var prop = Sentio.GetModuleProperty(SentioModules.Vision, propName, propArg);
@@ -583,23 +627,16 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
 
             // Step to first die in route, subsite 0
             var resp = await Sentio.ExecuteRemoteCommandAsync("map:step_next_die", null);
-            if (resp.ErrorCode != 0) Output(resp.Message);
+            if (resp.ErrorCode != 0)
+            {
+                throw new Exception(resp.Message);
+            }
         }
         catch (Exception exc)
         {
             Output(exc.Message);
             await Sentio.ShowHintAsync(exc.Message, CancellationToken.None);
         }
-    }
-
-    private Camera _activeCamera = Camera.Scope;
-    private Stage _activeStage = Stage.Unknown;
-    private string _serverName = "127.0.0.1";
-
-    public Camera ActiveCamera
-    {
-        get => _activeCamera;
-        set => SetProperty(ref _activeCamera, value);
     }
 
     private async Task SwitchCameraImplAsync(Camera camera)
