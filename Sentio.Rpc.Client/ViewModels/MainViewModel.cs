@@ -301,11 +301,10 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
 
             // Query the compatibility level supported by the SENTIO Server.
             var compatLevel = Sentio.CompatLevel;
-            if (!Enum.IsDefined(compatLevel))
-                LogLines.Add(
-                    $"Sentio Server is reporting compatibility level {compatLevel}. This level is higher than the one supported by the RPC version of this client!");
-            else
-                LogLines.Add($"Sentio Server is reporting compatibility level {compatLevel}");
+            LogLines.Add(
+                !Enum.IsDefined(compatLevel)
+                    ? $"Sentio Server is reporting compatibility level {compatLevel}. This level is higher than the one supported by the RPC library used by this client."
+                    : $"Sentio Server is reporting compatibility level {compatLevel}");
 
             SentioVersion = Sentio.Version;
             LogLines.Add($"Sentio Server is reporting SENTIO version {SentioVersion}");
