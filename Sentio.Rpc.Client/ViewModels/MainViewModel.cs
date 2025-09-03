@@ -447,6 +447,7 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
 
             var visionProp = new Dictionary<string, Tuple<string, string>>
             {
+/*
                 // Jpeg Quality in percent when saving images
                 { "jpeg_quality", new Tuple<string, string>("", "") },
 
@@ -460,10 +461,26 @@ public class MainViewModel : ObservableObject, ISentioRpcClient
                 { "exposure", new Tuple<string, string>("scope", "") },
                 { "exposure_min", new Tuple<string, string>("scope", "") },
                 { "exposure_max", new Tuple<string, string>("scope", "") },
-                { "calib", new Tuple<string, string>("scope", "") },
+  */              
+                //
+                // Image calibration parameters for building a proper
+                // coordinate system in an external application.
+                //
+
+                // Camera sensor pixel size in µm
+                { "camera_calib", new Tuple<string, string>("scope", "") },
+                
+                // Calibration angle of the camera in degree. Should be close to 0
+                { "camera_angle", new Tuple<string, string>("scope", "") },
+
+                // Center of the camera ROI in pixel coordinates
+                { "roi_center_px", new Tuple<string, string>("scope", "") },
 
                 // size of the camera's region of interest in µm
-                { "roi_size", new Tuple<string, string>("scope", "") }
+                { "roi_size", new Tuple<string, string>("scope", "") },
+
+                // size of the camera's region of interest in pixel
+                { "roi_size_px", new Tuple<string, string>("scope", "") }
             };
 
             foreach (var it in visionProp)
